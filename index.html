@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Joan</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <header>
     <nav>
-      <a href="/" class="logo">Joan</a>
+      <a href="/" class="logo">J.</a>
       <ul>
         <li><a href="#about">About</a></li>
         <li><a href="#projects">Projects</a></li>
@@ -20,23 +23,57 @@
 
   <main>
     <section id="hero">
-      <h1>Hi, I'm Joan</h1>
-      <p>Welcome to my personal site.</p>
+      <p class="greeting">Hello, I'm</p>
+      <h1>Joan</h1>
+      <p class="tagline">Developer & creator of things on the internet.</p>
+      <div class="hero-links">
+        <a href="https://github.com/Extantword" class="btn" target="_blank" rel="noopener">GitHub</a>
+        <a href="#contact" class="btn btn-outline">Get in touch</a>
+      </div>
     </section>
 
     <section id="about">
-      <h2>About</h2>
-      <p>This site is a work in progress. Check back soon for updates.</p>
+      <span class="section-label">About</span>
+      <h2>A bit about me</h2>
+      <p>
+        I like building things. I'm interested in software, design, and
+        the space where the two overlap. This site is a small corner of
+        the internet I call mine.
+      </p>
     </section>
 
     <section id="projects">
-      <h2>Projects</h2>
-      <p>Coming soon.</p>
+      <span class="section-label">Projects</span>
+      <h2>Selected work</h2>
+      <div class="project-grid">
+        <a href="#" class="project-card">
+          <h3>Project One</h3>
+          <p>A brief description of something interesting you built.</p>
+          <span class="arrow">&rarr;</span>
+        </a>
+        <a href="#" class="project-card">
+          <h3>Project Two</h3>
+          <p>Another project that showcases your skills and interests.</p>
+          <span class="arrow">&rarr;</span>
+        </a>
+        <a href="#" class="project-card">
+          <h3>Project Three</h3>
+          <p>One more to round things out. Replace these with your own.</p>
+          <span class="arrow">&rarr;</span>
+        </a>
+      </div>
     </section>
 
     <section id="contact">
-      <h2>Contact</h2>
-      <p>You can find me on <a href="https://github.com/Extantword">GitHub</a>.</p>
+      <span class="section-label">Contact</span>
+      <h2>Let's connect</h2>
+      <p>
+        Feel free to reach out if you want to collaborate, chat, or
+        just say hello.
+      </p>
+      <div class="contact-links">
+        <a href="https://github.com/Extantword" target="_blank" rel="noopener">GitHub</a>
+      </div>
     </section>
   </main>
 

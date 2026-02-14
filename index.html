@@ -4,16 +4,286 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Joan — Blog</title>
-  <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    :root {
+      --bg: #FAF8F5;
+      --bg-warm: #F3EFE9;
+      --text: #1A1A1A;
+      --text-muted: #6B6560;
+      --text-light: #9B9590;
+      --accent: #2A2A2A;
+      --border: #E5E0DA;
+      --card-bg: #FFFFFF;
+      --card-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04);
+      --card-hover-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.08);
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans: 'Instrument Sans', system-ui, sans-serif;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      position: relative;
+    }
+    /* ── Canvas ── */
+    #tree-canvas {
+      display: block;
+      width: 100%;
+      height: 400px;
+      pointer-events: none;
+    }
+    /* ── Fade-out overlay above trees ── */
+    .tree-fade {
+      width: 100%;
+      height: 100px;
+      background: linear-gradient(to bottom, var(--bg), transparent);
+      pointer-events: none;
+    }
+    /* ── Page ── */
+    .page-wrapper {
+      position: relative;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    /* ── Header ── */
+    header {
+      padding: 40px 0 80px;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: var(--serif);
+      font-size: 1.5rem;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 32px;
+    }
+    nav ul a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color var(--transition);
+      position: relative;
+    }
+    nav ul a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 1.5px;
+      background: var(--text);
+      transition: width var(--transition);
+    }
+    nav ul a:hover {
+      color: var(--text);
+    }
+    nav ul a:hover::after {
+      width: 100%;
+    }
+    /* ── Intro ── */
+    #intro {
+      padding-bottom: 80px;
+    }
+    #intro h1 {
+      font-family: var(--serif);
+      font-size: clamp(3rem, 8vw, 5rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .bio {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.75;
+    }
+    .bio strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    /* ── Section titles ── */
+    .section-title {
+      font-family: var(--serif);
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 36px;
+      padding-bottom: 12px;
+      border-bottom: 1.5px solid var(--border);
+      color: var(--text);
+    }
+    /* ── Blog Cards ── */
+    #blog {
+      padding-bottom: 80px;
+    }
+    .post-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 20px;
+      transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .post-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 0;
+      background: var(--text);
+      transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 0 0 2px 0;
+    }
+    .post-card:hover {
+      box-shadow: var(--card-hover-shadow);
+      transform: translateY(-2px);
+      border-color: #D5D0CA;
+    }
+    .post-card:hover::before {
+      height: 100%;
+    }
+    .post-card time {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+    .post-card h3 {
+      margin-bottom: 10px;
+    }
+    .post-card h3 a {
+      font-family: var(--serif);
+      font-size: 1.35rem;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      transition: color var(--transition);
+    }
+    .post-card h3 a:hover {
+      color: var(--text-muted);
+    }
+    .post-card > p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .post-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg-warm);
+      padding: 4px 12px;
+      border-radius: 100px;
+      letter-spacing: 0.02em;
+      transition: background var(--transition), color var(--transition);
+    }
+    .post-card:hover .tag {
+      background: #EDE8E1;
+      color: var(--text);
+    }
+    /* ── About ── */
+    #about {
+      padding-bottom: 60px;
+    }
+    #about p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      line-height: 1.8;
+      margin-bottom: 16px;
+      max-width: 560px;
+    }
+    #about a {
+      color: var(--text);
+      text-decoration: underline;
+      text-decoration-color: var(--border);
+      text-underline-offset: 3px;
+      transition: text-decoration-color var(--transition);
+    }
+    #about a:hover {
+      text-decoration-color: var(--text);
+    }
+    /* ── Footer ── */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+    }
+    footer p {
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+    /* ── Entrance animations ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    #intro h1 {
+      animation: fadeUp 0.8s ease-out both;
+    }
+    .bio {
+      animation: fadeUp 0.8s ease-out 0.15s both;
+    }
+    .section-title {
+      animation: fadeUp 0.6s ease-out 0.3s both;
+    }
+    .post-card:nth-child(1) { animation: fadeUp 0.6s ease-out 0.4s both; }
+    .post-card:nth-child(2) { animation: fadeUp 0.6s ease-out 0.5s both; }
+    .post-card:nth-child(3) { animation: fadeUp 0.6s ease-out 0.6s both; }
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header { padding: 24px 0 48px; }
+      nav ul { gap: 20px; }
+      .post-card { padding: 24px; }
+      #tree-canvas { height: 300px; }
+    }
+  </style>
 </head>
 <body>
-
-  <canvas id="tree-left" class="tree-canvas tree-left"></canvas>
-  <canvas id="tree-right" class="tree-canvas tree-right"></canvas>
-
   <div class="page-wrapper">
     <header>
       <nav>
@@ -25,7 +295,6 @@
         </ul>
       </nav>
     </header>
-
     <main>
       <section id="intro">
         <h1>Hi!</h1>
@@ -35,10 +304,8 @@
           I like building bridges between things and concepts.
         </p>
       </section>
-
       <section id="blog">
         <h2 class="section-title">Blog</h2>
-
         <article class="post-card">
           <time datetime="2026-02-14">Feb 14, 2026</time>
           <h3><a href="#">On Bridges Between Disciplines</a></h3>
@@ -51,7 +318,6 @@
             <span class="tag">math</span>
           </div>
         </article>
-
         <article class="post-card">
           <time datetime="2026-02-01">Feb 1, 2026</time>
           <h3><a href="#">Procedural Trees and Recursive Beauty</a></h3>
@@ -64,7 +330,6 @@
             <span class="tag">algorithms</span>
           </div>
         </article>
-
         <article class="post-card">
           <time datetime="2026-01-18">Jan 18, 2026</time>
           <h3><a href="#">First Post: Hello World</a></h3>
@@ -77,7 +342,6 @@
           </div>
         </article>
       </section>
-
       <section id="about">
         <h2 class="section-title">About</h2>
         <p>
@@ -92,12 +356,253 @@
         </p>
       </section>
     </main>
-
     <footer>
       <p>&copy; 2026 Joan</p>
     </footer>
   </div>
-
-  <script src="trees.js"></script>
+  <div class="tree-fade"></div>
+  <canvas id="tree-canvas"></canvas>
+  <script>
+    // ─── Procedural Bonsai Trees ───
+    // Continuously growing, blossoming bonsai rendered on a fixed bottom canvas.
+    const canvas = document.getElementById('tree-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', () => { resize(); initTrees(); });
+    resize();
+    // ── Helpers ──
+    function rand(a, b) { return a + Math.random() * (b - a); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    // ── Blossom petals ──
+    class Blossom {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.r = rand(2, 5);
+        this.targetR = this.r;
+        this.currentR = 0;
+        this.born = performance.now();
+        this.growDuration = rand(800, 2000);
+        this.opacity = rand(0.3, 0.7);
+        this.hue = rand(-10, 20); // pinkish offset
+        this.drift = rand(-0.15, 0.15);
+        this.fall = 0;
+        this.falling = false;
+        this.fallSpeed = rand(0.3, 0.8);
+        this.lifespan = rand(6000, 14000);
+      }
+      update(now) {
+        const age = now - this.born;
+        const growT = Math.min(age / this.growDuration, 1);
+        this.currentR = this.targetR * easeOutBack(growT);
+        if (age > this.lifespan && !this.falling) {
+          this.falling = true;
+        }
+        if (this.falling) {
+          this.fall += this.fallSpeed;
+          this.opacity -= 0.004;
+          this.x += this.drift;
+        }
+        return this.opacity > 0;
+      }
+      draw() {
+        const r = Math.max(0, this.currentR);
+        if (r < 0.1) return;
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        const pink = `hsl(${345 + this.hue}, 60%, ${72 + this.hue * 0.5}%)`;
+        ctx.fillStyle = pink;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y + this.fall, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = this.opacity * 0.5;
+        ctx.fillStyle = `hsl(${350 + this.hue}, 50%, 88%)`;
+        ctx.beginPath();
+        ctx.arc(this.x - r * 0.2, this.y + this.fall - r * 0.2, Math.max(0, r * 0.45), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    function easeOutBack(t) {
+      const c1 = 1.70158;
+      const c3 = c1 + 1;
+      return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    }
+    // ── Branch segment for animation ──
+    class Branch {
+      constructor(x, y, angle, length, thickness, depth, maxDepth, tree) {
+        this.x = x;
+        this.y = y;
+        this.angle = angle;
+        this.length = length;
+        this.thickness = thickness;
+        this.depth = depth;
+        this.maxDepth = maxDepth;
+        this.tree = tree;
+        this.progress = 0;
+        this.speed = rand(0.008, 0.018);
+        this.children = [];
+        this.spawned = false;
+        this.blossoms = [];
+        this.endX = x + Math.sin(angle) * length;
+        this.endY = y - Math.cos(angle) * length;
+        // Slight curve
+        this.curve = rand(-0.15, 0.15);
+      }
+      update(now) {
+        if (this.progress < 1) {
+          this.progress = Math.min(this.progress + this.speed, 1);
+        }
+        if (this.progress > 0.7 && !this.spawned) {
+          this.spawned = true;
+          if (this.depth < this.maxDepth) {
+            const branches = this.depth < 3 ? Math.floor(rand(2, 4)) : Math.floor(rand(1, 3));
+            for (let i = 0; i < branches; i++) {
+              const spread = rand(0.3, 0.8);
+              const side = i % 2 === 0 ? 1 : -1;
+              const newAngle = this.angle + side * spread + rand(-0.1, 0.1);
+              const lenFactor = rand(0.6, 0.8);
+              const thickFactor = rand(0.55, 0.7);
+              this.children.push(new Branch(
+                this.endX, this.endY,
+                newAngle,
+                this.length * lenFactor,
+                this.thickness * thickFactor,
+                this.depth + 1,
+                this.maxDepth,
+                this.tree
+              ));
+            }
+          }
+          // Blossoms at tips
+          if (this.depth >= this.maxDepth - 2) {
+            const count = Math.floor(rand(2, 6));
+            for (let i = 0; i < count; i++) {
+              this.blossoms.push(new Blossom(
+                this.endX + rand(-8, 8),
+                this.endY + rand(-8, 8)
+              ));
+            }
+          }
+        }
+        // Update children
+        this.children.forEach(c => c.update(now));
+        // Update blossoms, remove dead ones
+        this.blossoms = this.blossoms.filter(b => b.update(now));
+        // Occasionally spawn new blossoms at tips
+        if (this.depth >= this.maxDepth - 2 && this.spawned && Math.random() < 0.003) {
+          this.blossoms.push(new Blossom(
+            this.endX + rand(-10, 10),
+            this.endY + rand(-10, 10)
+          ));
+        }
+      }
+      draw() {
+        if (this.progress === 0) return;
+        const t = this.progress;
+        const cx = lerp(this.x, this.endX, 0.5) + this.curve * this.length;
+        const cy = lerp(this.y, this.endY, 0.5);
+        // Draw curved branch
+        ctx.save();
+        ctx.strokeStyle = `rgba(30, 26, 22, ${0.7 + this.depth * 0.03})`;
+        ctx.lineWidth = Math.max(this.thickness * t, 0.5);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        // Partial draw based on progress
+        const steps = 20;
+        const drawSteps = Math.floor(steps * t);
+        for (let i = 1; i <= drawSteps; i++) {
+          const s = i / steps;
+          const px = (1-s)*(1-s)*this.x + 2*(1-s)*s*cx + s*s*this.endX;
+          const py = (1-s)*(1-s)*this.y + 2*(1-s)*s*cy + s*s*this.endY;
+          ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.restore();
+        // Draw children
+        this.children.forEach(c => c.draw());
+        // Draw blossoms
+        this.blossoms.forEach(b => b.draw());
+      }
+    }
+    // ── Tree ──
+    class Tree {
+      constructor(x) {
+        this.x = x;
+        const baseLen = rand(50, 90);
+        const baseTrunkThick = rand(5, 9);
+        const maxDepth = Math.floor(rand(6, 9));
+        this.trunk = new Branch(
+          x, H,
+          rand(-0.15, 0.15),
+          baseLen,
+          baseTrunkThick,
+          0,
+          maxDepth,
+          this
+        );
+        this.trunk.speed = rand(0.004, 0.008); // trunk grows slower
+      }
+      update(now) {
+        this.trunk.update(now);
+      }
+      draw() {
+        this.trunk.draw();
+      }
+    }
+    // ── Scene ──
+    let trees = [];
+    function initTrees() {
+      trees = [];
+      const count = Math.max(3, Math.floor(W / 200));
+      const spacing = W / (count + 1);
+      for (let i = 0; i < count; i++) {
+        const x = spacing * (i + 1) + rand(-spacing * 0.3, spacing * 0.3);
+        trees.push(new Tree(x));
+      }
+    }
+    // Regrow cycle: periodically add new trees to keep it alive
+    let lastRegrow = performance.now();
+    const regrowInterval = 12000;
+    function animate(now) {
+      ctx.clearRect(0, 0, W, H);
+      // Subtle ground line
+      ctx.save();
+      ctx.strokeStyle = 'rgba(30, 26, 22, 0.08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, H - 1);
+      ctx.lineTo(W, H - 1);
+      ctx.stroke();
+      ctx.restore();
+      trees.forEach(t => {
+        t.update(now);
+        t.draw();
+      });
+      // Periodically add a new tree for continuous growth
+      if (now - lastRegrow > regrowInterval) {
+        lastRegrow = now;
+        const x = rand(W * 0.05, W * 0.95);
+        trees.push(new Tree(x));
+        // Cap the number of trees to avoid performance issues
+        if (trees.length > 12) {
+          trees.shift();
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+    initTrees();
+    requestAnimationFrame(animate);
+  </script>
 </body>
 </html>

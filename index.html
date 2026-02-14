@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Performance Vector Field</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
+        
+        /* UI Container */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box;
+        }
+
+        /* Control Panel */
+        .panel {
+            background: rgba(15, 15, 15, 0.85); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+            padding: 15px; pointer-events: auto; width: 320px;
+            transition: opacity 0.3s;
+        }
+
+        .panel:hover { opacity: 1; }
+        .panel.minimized .content { display: none; }
+
+        h2 { margin: 0 0 10px 0; font-size: 16px; display: flex; justify-content: space-between; cursor: pointer; color: #4a9eff; }
+        
+        /* Inputs */
+        .input-row { margin-bottom: 10px; }
+        label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; }
+        input[type="text"] {
+            width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #444; color: #fff;
+            padding: 6px; border-radius: 4px; font-family: monospace; font-size: 13px;
+        }
+        input[type="text"]:focus { outline: none; border-color: #4a9eff; }
+
+        /* Sliders & Toggles */
+        .control-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .slider-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+        input[type="range"] { width: 60%; accent-color: #4a9eff; cursor: pointer; }
+        
+        .toggle-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; }
+        .toggle-btn {
+            background: #2a2a2a; border: 1px solid #444; color: #ccc; padding: 4px 10px;
+            border-radius: 4px; font-size: 11px; cursor: pointer; transition: all 0.2s;
+        }
+        .toggle-btn.active { background: #4a9eff; color: white; border-color: #4a9eff; }
+
+        /* Buttons */
+        .btn-row { display: flex; gap: 8px; margin-top: 15px; }
+        button.action {
+            flex: 1; padding: 8px; background: #333; border: none; color: white;
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;
+        }
+        button.action:hover { background: #444; }
+        button.primary { background: #4a9eff; }
+        button.primary:hover { background: #357abd; }
+
+        /* Presets */
+        .presets { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; }
+        .preset-tag { 
+            font-size: 10px; padding: 3px 8px; background: rgba(255,255,255,0.1); 
+            border-radius: 10px; cursor: pointer; 
+        }
+        .preset-tag:hover { background: rgba(255,255,255,0.2); }
+
+        /* Legend */
+        .legend { 
+            position: absolute; bottom: 20px; right: 20px; 
+            background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; 
+            font-size: 11px; display: none; pointer-events: none;
+        }
+        .legend.visible { display: block; }
+        .gradient-bar { height: 8px; width: 100px; margin-top: 4px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <main id="canvas-target"></main>
+
+    <div id="ui-layer">
+        <div class="panel" id="mainPanel">
+            <h2 onclick="togglePanel()">Vector Field Controls <span>−</span></h2>
+            <div class="content">
+                <div class="input-row">
+                    <label>dx/dt (Horizontal)</label>
+                    <input type="text" id="xEq" value="sin(y) - 0.1*x">
+                </div>
+                <div class="input-row">
+                    <label>dy/dt (Vertical)</label>
+                    <input type="text" id="yEq" value="cos(x) - 0.1*y">
+                </div>
+                
+                <div class="btn-row">
+                    <button class="action primary" onclick="app.updateField()">Update Field</button>
+                    <button class="action" onclick="app.resetParticles()">Reset Particles</button>
+                </div>
+
+                <div class="control-group">
+                    <div class="slider-row">
+                        <span>Particles</span>
+                        <input type="range" min="1000" max="8000" step="500" value="4000" oninput="app.setParticleCount(this.value)">
+                    </div>
+                    <div class="slider-row">
+                        <span>Speed</span>
+                        <input type="range" min="0" max="3" step="0.1" value="1" oninput="app.params.speed = parseFloat(this.value)">
+                    </div>
+                    <div class="slider-row">
+                        <span>Trail Fade</span>
+                        <input type="range" min="5" max="255" step="5" value="20" oninput="app.params.trailFade = parseInt(this.value)">
+                    </div>
+                </div>
+
+                <div class="toggle-row">
+                    <button id="btn-vec" class="toggle-btn" onclick="app.toggleOverlay('vectors')">Show Vectors</button>
+                    <button id="btn-div" class="toggle-btn" onclick="app.toggleOverlay('divergence')">Overlay Divergence</button>
+                    <button id="btn-curl" class="toggle-btn" onclick="app.toggleOverlay('curl')">Overlay Curl</button>
+                </div>
+
+                <div class="presets">
+                    <span class="preset-tag" onclick="app.loadPreset('pendulum')">Pendulum</span>
+                    <span class="preset-tag" onclick="app.loadPreset('saddle')">Saddle</span>
+                    <span class="preset-tag" onclick="app.loadPreset('vortex')">Vortex</span>
+                    <span class="preset-tag" onclick="app.loadPreset('complex')">Lattice</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="legend" class="legend">
+            <div id="legend-title">Divergence</div>
+            <div class="gradient-bar" id="legend-gradient"></div>
+            <div style="display:flex; justify-content:space-between; margin-top:2px; color:#aaa;">
+                <span>-</span><span>0</span><span>+</span>
+            </div>
+        </div>
+    </div>
+
+<script>
+/**
+ * Application State & Configuration
+ */
+const AppConfig = {
+    // Physics Grid Resolution (lower = finer grid, higher CPU usage)
+    gridSize: 10, 
+    // Scale: Pixels per unit coordinate
+    scale: 60,
+    colors: {
+        source: [255, 50, 50],   // Red
+        sink: [50, 100, 255],    // Blue
+        cw: [0, 255, 255],       // Cyan
+        ccw: [255, 0, 255]       // Magenta
+    }
+};
+
+/**
+ * Grid System: Handles Physics Calculations off the main render loop
+ */
+class FieldGrid {
+    constructor(w, h, res) {
+        this.res = res;
+        this.cols = Math.ceil(w / res);
+        this.rows = Math.ceil(h / res);
+        this.width = w;
+        this.height = h;
+        
+        // Flat arrays are much faster than objects or 2D arrays
+        this.fieldX = new Float32Array(this.cols * this.rows);
+        this.fieldY = new Float32Array(this.cols * this.rows);
+        this.divergence = new Float32Array(this.cols * this.rows);
+        this.curl = new Float32Array(this.cols * this.rows);
+    }
+
+    compute(funcX, funcY) {
+        let maxDiv = 0;
+        let maxCurl = 0;
+
+        for (let i = 0; i < this.cols; i++) {
+            for (let j = 0; j < this.rows; j++) {
+                const idx = i + j * this.cols;
+                
+                // Screen to World Coordinates
+                const x = (i * this.res - this.width/2) / AppConfig.scale;
+                const y = (j * this.res - this.height/2) / AppConfig.scale;
+
+                // 1. Calculate Vector
+                // Using a small epsilon for derivatives
+                const h = 0.01;
+                
+                // Central difference requires evaluating neighbor points
+                // To optimize, we just evaluate vector here, and derivatives approximations
+                
+                // Center
+                const v = this.safeEval(funcX, funcY, x, y);
+                this.fieldX[idx] = v.x;
+                this.fieldY[idx] = v.y;
+
+                // Finite Difference for Div/Curl
+                const vRight = this.safeEval(funcX, funcY, x + h, y);
+                const vLeft  = this.safeEval(funcX, funcY, x - h, y);
+                const vUp    = this.safeEval(funcX, funcY, x, y + h);
+                const vDown  = this.safeEval(funcX, funcY, x, y - h);
+
+                // Divergence: dFx/dx + dFy/dy
+                const dFx_dx = (vRight.x - vLeft.x) / (2*h);
+                const dFy_dy = (vUp.y - vDown.y) / (2*h);
+                this.divergence[idx] = dFx_dx + dFy_dy;
+
+                // Curl: dFy/dx - dFx/dy (2D curl)
+                const dFy_dx = (vRight.y - vLeft.y) / (2*h);
+                const dFx_dy = (vUp.x - vDown.x) / (2*h);
+                this.curl[idx] = dFy_dx - dFx_dy;
+
+                maxDiv = Math.max(maxDiv, Math.abs(this.divergence[idx]));
+                maxCurl = Math.max(maxCurl, Math.abs(this.curl[idx]));
+            }
+        }
+        return { maxDiv, maxCurl };
+    }
+
+    safeEval(fx, fy, x, y) {
+        try {
+            return { x: fx(x,y), y: fy(x,y) };
+        } catch(e) { return {x:0, y:0}; }
+    }
+
+    // Get vector at specific screen coordinates (Bilinear interpolation could be added here for smoothness)
+    getVector(screenX, screenY) {
+        const col = Math.floor(screenX / this.res);
+        const row = Math.floor(screenY / this.res);
+        
+        if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return null;
+        
+        const idx = col + row * this.cols;
+        return { x: this.fieldX[idx], y: this.fieldY[idx] };
+    }
+}
+
+/**
+ * Main Controller
+ */
+const app = {
+    particles: [],
+    grid: null,
+    bgGraphics: null, // Stores the heatmap so we don't recalculate pixels every frame
+    params: {
+        speed: 1,
+        trailFade: 20,
+        viewMode: 'none' // 'none', 'divergence', 'curl'
+    },
+    showVectors: false,
+    
+    // UI Helpers
+    toggleOverlay: (mode) => {
+        const btnDiv = document.getElementById('btn-div');
+        const btnCurl = document.getElementById('btn-curl');
+        const legend = document.getElementById('legend');
+        const grad = document.getElementById('legend-gradient');
+
+        // Reset
+        btnDiv.classList.remove('active');
+        btnCurl.classList.remove('active');
+        
+        if (mode === 'vectors') {
+            app.showVectors = !app.showVectors;
+            document.getElementById('btn-vec').classList.toggle('active', app.showVectors);
+            return;
+        }
+
+        if (app.params.viewMode === mode) {
+            // Toggle Off
+            app.params.viewMode = 'none';
+            legend.classList.remove('visible');
+        } else {
+            // Toggle On
+            app.params.viewMode = mode;
+            legend.classList.add('visible');
+            
+            if (mode === 'divergence') {
+                btnDiv.classList.add('active');
+                document.getElementById('legend-title').innerText = "Divergence (Source/Sink)";
+                grad.style.background = `linear-gradient(90deg, rgb(50,100,255), black, rgb(255,50,50))`;
+            } else {
+                btnCurl.classList.add('active');
+                document.getElementById('legend-title').innerText = "Curl (Rotation)";
+                grad.style.background = `linear-gradient(90deg, rgb(255,0,255), black, rgb(0,255,255))`;
+            }
+        }
+        // Redraw the background buffer
+        app.renderBackground(); 
+    },
+
+    setParticleCount: (count) => {
+        const num = parseInt(count);
+        if (num < app.particles.length) {
+            app.particles.splice(num);
+        } else {
+            for (let i = app.particles.length; i < num; i++) {
+                app.particles.push(new Particle());
+            }
+        }
+    },
+
+    loadPreset: (name) => {
+        const presets = {
+            pendulum: { x: 'y', y: '-sin(x) - 0.2*y' },
+            saddle: { x: 'x', y: '-y' },
+            vortex: { x: '-y + x*(1 - x*x - y*y)', y: 'x + y*(1 - x*x - y*y)' }, // Limit cycle
+            complex: { x: 'sin(x+y)', y: 'cos(x-y)' }
+        };
+        document.getElementById('xEq').value = presets[name].x;
+        document.getElementById('yEq').value = presets[name].y;
+        app.updateField();
+    },
+
+    // Generates functions from strings
+    updateField: () => {
+        const xStr = document.getElementById('xEq').value;
+        const yStr = document.getElementById('yEq').value;
+
+        // Create functions safely
+        try {
+            // We expose Math functions directly to the scope
+            const makeFn = (str) => new Function('x', 'y', `
+                const { sin, cos, tan, sqrt, abs, pow, PI, exp, log } = Math;
+                return ${str};
+            `);
+            const funcX = makeFn(xStr);
+            const funcY = makeFn(yStr);
+
+            // Recompute Grid
+            const stats = app.grid.compute(funcX, funcY);
+            app.maxStats = stats; // Store for normalization
+            
+            app.renderBackground();
+            app.resetParticles();
+            
+        } catch (e) {
+            alert("Equation Error: " + e.message);
+        }
+    },
+
+    renderBackground: () => {
+        if (!app.grid || !app.bgGraphics) return;
+        const g = app.bgGraphics;
+        g.clear();
+
+        // If no overlay mode, leave transparent (handled in draw loop)
+        if (app.params.viewMode === 'none') return;
+
+        const { res, cols, rows, divergence, curl } = app.grid;
+        const { maxDiv, maxCurl } = app.maxStats;
+
+        g.noStroke();
+        
+        for (let i = 0; i < cols; i++) {
+            for (let j = 0; j < rows; j++) {
+                const idx = i + j * cols;
+                let val = 0;
+                let col = color(0);
+
+                if (app.params.viewMode === 'divergence') {
+                    // Normalize -1 to 1 based on max found value
+                    val = divergence[idx] / (maxDiv + 0.001);
+                    // Color Map: Blue (-) -> Black (0) -> Red (+)
+                    if (val > 0) col = color(lerpColor(color(0), color(AppConfig.colors.source), Math.tanh(val*2))); // tanh for soft clamp
+                    else col = color(lerpColor(color(0), color(AppConfig.colors.sink), Math.tanh(Math.abs(val)*2)));
+                } 
+                else if (app.params.viewMode === 'curl') {
+                    val = curl[idx] / (maxCurl + 0.001);
+                    if (val > 0) col = color(lerpColor(color(0), color(AppConfig.colors.cw), Math.tanh(val*2)));
+                    else col = color(lerpColor(color(0), color(AppConfig.colors.ccw), Math.tanh(Math.abs(val)*2)));
+                }
+
+                g.fill(col);
+                g.rect(i * res, j * res, res, res);
+            }
+        }
+    },
+
+    resetParticles: () => {
+        app.particles.forEach(p => p.respawn());
+    }
+};
+
+/**
+ * Particle Class
+ */
+class Particle {
+    constructor() {
+        this.x = random(width);
+        this.y = random(height);
+        this.age = random(100);
+        this.maxAge = 100 + random(100);
+        this.history = []; // Could use for ribbon drawing if needed
+    }
+
+    respawn() {
+        this.x = random(width);
+        this.y = random(height);
+        this.age = 0;
+        this.maxAge = 100 + random(100);
+        // Chance to spawn on interesting areas? (Future improvement)
+    }
+
+    update() {
+        if (this.age > this.maxAge) this.respawn();
+        
+        // RK4 Integration for smooth curves
+        const dt = 0.5 * app.params.speed;
+        
+        const k1 = app.grid.getVector(this.x, this.y);
+        if (!k1) { this.respawn(); return; }
+
+        const k2 = app.grid.getVector(this.x + k1.x * dt * 0.5, this.y + k1.y * dt * 0.5);
+        if (!k2) { this.respawn(); return; }
+
+        const k3 = app.grid.getVector(this.x + k2.x * dt * 0.5, this.y + k2.y * dt * 0.5);
+        if (!k3) { this.respawn(); return; }
+
+        const k4 = app.grid.getVector(this.x + k3.x * dt, this.y + k3.y * dt);
+        if (!k4) { this.respawn(); return; }
+
+        this.x += (k1.x + 2*k2.x + 2*k3.x + k4.x) * dt / 6;
+        this.y += (k1.y + 2*k2.y + 2*k3.y + k4.y) * dt / 6;
+
+        this.age++;
+
+        // Bounds check
+        if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) this.respawn();
+    }
+
+    draw() {
+        // Simple point drawing is fastest for thousands of particles
+        // Alpha based on age (fade in/out)
+        const alpha = 255 * Math.sin((this.age / this.maxAge) * Math.PI);
+        stroke(200, 230, 255, alpha);
+        strokeWeight(2);
+        point(this.x, this.y);
+    }
+}
+
+/**
+ * P5.js Lifecycle
+ */
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+    
+    // Initialize Grid
+    app.grid = new FieldGrid(width, height, AppConfig.gridSize);
+    
+    // Background buffer for heatmap
+    app.bgGraphics = createGraphics(width, height);
+
+    // Initial Particles
+    app.setParticleCount(4000);
+    
+    // Initial Calc
+    app.updateField();
+}
+
+function draw() {
+    // 1. Background / Trails
+    // If we have a heatmap (Divergence/Curl), we draw it.
+    // However, drawing a solid image every frame kills trails.
+    // So we draw the image with low opacity to allow trailing? 
+    // Or we draw solid image and use a separate buffer for trails.
+    // Simpler approach: If viewMode is ON, trails are less important, we prioritize the map.
+    
+    if (app.params.viewMode !== 'none') {
+        // Draw the heatmap fully
+        image(app.bgGraphics, 0, 0);
+        // Dim it slightly so particles pop
+        fill(0, 50);
+        noStroke();
+        rect(0, 0, width, height);
+    } else {
+        // Standard fade for trails
+        background(0, app.params.trailFade);
+    }
+
+    // 2. Vector Grid Overlay (Arrows)
+    if (app.showVectors) {
+        drawVectorGrid();
+    }
+
+    // 3. Particles
+    for (let p of app.particles) {
+        p.update();
+        p.draw();
+    }
+}
+
+function drawVectorGrid() {
+    stroke(255, 50);
+    strokeWeight(1);
+    const step = 40;
+    for(let x=0; x<width; x+=step) {
+        for(let y=0; y<height; y+=step) {
+            const v = app.grid.getVector(x,y);
+            if(v) {
+                const mag = Math.sqrt(v.x*v.x + v.y*v.y);
+                if(mag > 0.01) {
+                    const len = Math.min(mag, 20); // cap arrow length
+                    const ang = Math.atan2(v.y, v.x);
+                    push();
+                    translate(x,y);
+                    rotate(ang);
+                    line(0,0, len, 0);
+                    // Arrowhead
+                    line(len, 0, len-3, -3);
+                    line(len, 0, len-3, 3);
+                    pop();
+                }
+            }
+        }
+    }
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+    app.bgGraphics.resizeCanvas(width, height);
+    app.grid = new FieldGrid(width, height, AppConfig.gridSize);
+    app.updateField();
+}
+
+function togglePanel() {
+    const p = document.getElementById('mainPanel');
+    p.classList.toggle('minimized');
+}
+</script>
+</body>
+</html>

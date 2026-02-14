@@ -3,82 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Joan</title>
+  <title>Joan — Blog</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header>
-    <nav>
-      <a href="/" class="logo">J.</a>
-      <ul>
-        <li><a href="#about">About</a></li>
-        <li><a href="#projects">Projects</a></li>
-        <li><a href="#contact">Contact</a></li>
-      </ul>
-    </nav>
-  </header>
 
-  <main>
-    <section id="hero">
-      <p class="greeting">Hello, I'm</p>
-      <h1>Joan</h1>
-      <p class="tagline">Developer & creator of things on the internet.</p>
-      <div class="hero-links">
-        <a href="https://github.com/Extantword" class="btn" target="_blank" rel="noopener">GitHub</a>
-        <a href="#contact" class="btn btn-outline">Get in touch</a>
-      </div>
-    </section>
+  <canvas id="tree-left" class="tree-canvas tree-left"></canvas>
+  <canvas id="tree-right" class="tree-canvas tree-right"></canvas>
 
-    <section id="about">
-      <span class="section-label">About</span>
-      <h2>A bit about me</h2>
-      <p>
-        I like building things. I'm interested in software, design, and
-        the space where the two overlap. This site is a small corner of
-        the internet I call mine.
-      </p>
-    </section>
+  <div class="page-wrapper">
+    <header>
+      <nav>
+        <a href="/" class="logo">Joan.</a>
+        <ul>
+          <li><a href="#blog">Blog</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="https://github.com/Extantword" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </nav>
+    </header>
 
-    <section id="projects">
-      <span class="section-label">Projects</span>
-      <h2>Selected work</h2>
-      <div class="project-grid">
-        <a href="#" class="project-card">
-          <h3>Project One</h3>
-          <p>A brief description of something interesting you built.</p>
-          <span class="arrow">&rarr;</span>
-        </a>
-        <a href="#" class="project-card">
-          <h3>Project Two</h3>
-          <p>Another project that showcases your skills and interests.</p>
-          <span class="arrow">&rarr;</span>
-        </a>
-        <a href="#" class="project-card">
-          <h3>Project Three</h3>
-          <p>One more to round things out. Replace these with your own.</p>
-          <span class="arrow">&rarr;</span>
-        </a>
-      </div>
-    </section>
+    <main>
+      <section id="intro">
+        <h1>Hi!</h1>
+        <p class="bio">
+          I am a Mathematics and Computer Science undergrad at
+          <strong>Universidad Nacional de Colombia</strong>.
+          I like building bridges between things and concepts.
+        </p>
+      </section>
 
-    <section id="contact">
-      <span class="section-label">Contact</span>
-      <h2>Let's connect</h2>
-      <p>
-        Feel free to reach out if you want to collaborate, chat, or
-        just say hello.
-      </p>
-      <div class="contact-links">
-        <a href="https://github.com/Extantword" target="_blank" rel="noopener">GitHub</a>
-      </div>
-    </section>
-  </main>
+      <section id="blog">
+        <h2 class="section-title">Blog</h2>
 
-  <footer>
-    <p>&copy; 2026 Joan</p>
-  </footer>
+        <article class="post-card">
+          <time datetime="2026-02-14">Feb 14, 2026</time>
+          <h3><a href="#">On Bridges Between Disciplines</a></h3>
+          <p>
+            Thoughts on why the most interesting ideas live at the
+            intersection of mathematics, computer science, and design.
+          </p>
+          <div class="post-tags">
+            <span class="tag">thoughts</span>
+            <span class="tag">math</span>
+          </div>
+        </article>
+
+        <article class="post-card">
+          <time datetime="2026-02-01">Feb 1, 2026</time>
+          <h3><a href="#">Procedural Trees and Recursive Beauty</a></h3>
+          <p>
+            Exploring L-systems and recursive algorithms to generate
+            organic-looking tree structures in the browser.
+          </p>
+          <div class="post-tags">
+            <span class="tag">generative art</span>
+            <span class="tag">algorithms</span>
+          </div>
+        </article>
+
+        <article class="post-card">
+          <time datetime="2026-01-18">Jan 18, 2026</time>
+          <h3><a href="#">First Post: Hello World</a></h3>
+          <p>
+            A short introduction to this blog and what I hope to write
+            about — math, code, and the things in between.
+          </p>
+          <div class="post-tags">
+            <span class="tag">meta</span>
+          </div>
+        </article>
+      </section>
+
+      <section id="about">
+        <h2 class="section-title">About</h2>
+        <p>
+          This is a small corner of the internet where I write about
+          the things I'm learning and building. I'm drawn to the places
+          where abstract mathematics meets practical computing — and
+          I try to make those connections visible here.
+        </p>
+        <p>
+          You can find my code on
+          <a href="https://github.com/Extantword" target="_blank" rel="noopener">GitHub</a>.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 Joan</p>
+    </footer>
+  </div>
+
+  <script src="trees.js"></script>
 </body>
 </html>
